@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  liveprofile:
+    build: .
+    container_name: name_changer
+    restart: unless-stopped
+    volumes:
+      - ./config.ini:/app/config.ini:ro
+      - ./liveprofile.session:/app/liveprofile.session
+    environment:
+      - TZ=Europe/Moscow
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
