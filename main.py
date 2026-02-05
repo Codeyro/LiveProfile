@@ -34,8 +34,11 @@ def butificate(name):
 
 async def main():
     # Подключаемся к серверам Telegram
-    client = TelegramClient('liveprofile', api_id, api_hash)
-    await client.start(phone=phone)
+    try:
+        client = TelegramClient('liveprofile', api_id, api_hash)
+        await client.start(phone=phone)
+    except errors.rpcerrorlist.AuthKeyDuplicatedError as e:
+        logging.critical(e)
 
     logging.debug('Connected to Telegram servers successfully')
     
