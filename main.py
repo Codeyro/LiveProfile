@@ -1,20 +1,27 @@
-import logging
+import os
 import asyncio
-from configparser import ConfigParser
+import logging
 from datetime import datetime
 from telethon import TelegramClient, errors
+from telethon.sessions import StringSession
 from telethon.tl.functions.account import UpdateProfileRequest
 
 
-# Считываем учетные данные
-config = ConfigParser()
-config.read('config.ini')
+# Настройка логирования
+logging.basicConfig(level=logging.INFO,
+                    filename="liveprofile.log",
+                    filemode="w",
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    datefmt='%Y.%m.%d %H:%M:%S')
 
-api_id = int(config['Telegram']['api_id'])
-api_hash = config['Telegram']['api_hash']
-phone = config['Telegram']['phone']
 
-logging.debug('Config data read successfully')
+# Чтение учетных данных
+try:
+    api_id = int(os.getenv('API_ID', 0))
+    api_hash = os.getenv('API_HASH', '')
+    session_string = os.getenv('SESSION_STRING', '')
+except Exception as e:
+    logging.critical(f'Config data read error: {e}')
 
 
 def butificate(name):
@@ -35,12 +42,14 @@ def butificate(name):
 async def main():
     # Подключаемся к серверам Telegram
     try:
-        client = TelegramClient('liveprofile', api_id, api_hash)
-        await client.start(phone=phone)
+        client = TelegramClient(
+        StringSession(session_string),
+        api_id,
+        api_hash
+        )
+        await client.start()
     except errors.rpcerrorlist.AuthKeyDuplicatedError as e:
         logging.critical(e)
-
-    logging.debug('Connected to Telegram servers successfully')
     
     i = 1
     name = None
@@ -53,8 +62,8 @@ async def main():
                 logging.debug(f'Name changed to "{name_b }"')
             except errors.rpcerrorlist.FloodWaitError as e:
                 logging.error(f'Flood Wait Error {e.seconds} seconds')
-            except ConnectionError:
-                logging.error('Connection error. Trying to connect again...')
+            except ConnectionError as e:
+                logging.error(e)
             i += 1
 
 

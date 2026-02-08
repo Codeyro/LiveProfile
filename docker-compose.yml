@@ -1,15 +1,17 @@
 version: '3.8'
 
 services:
-  liveprofile:
+  app:
     build: .
-    container_name: name_changer
+    container_name: liveprofile
     restart: unless-stopped
     volumes:
-      - ./config.ini:/app/config.ini:ro
-      - ./liveprofile.session:/app/liveprofile.session
+      - ./liveprofile.log:/app/liveprofile.log
     environment:
       - TZ=Europe/Moscow
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - SESSION_STRING=${SESSION_STRING}
     logging:
       driver: "json-file"
       options:

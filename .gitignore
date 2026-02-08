@@ -36,6 +36,7 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.log
 nosetests.xml
 coverage.xml
 *.cover
@@ -55,3 +56,4 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+liveprofile.log

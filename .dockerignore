@@ -9,6 +9,7 @@ venv/
 .env
 .git/
 .vscode/
+*.ini
 *.log
 docker-compose.yml
 .dockerignore
