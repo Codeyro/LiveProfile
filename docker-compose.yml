@@ -5,8 +5,6 @@ services:
     build: .
     container_name: liveprofile
     restart: unless-stopped
-    volumes:
-      - ./liveprofile.log:/app/liveprofile.log
     environment:
       - TZ=Europe/Moscow
       - API_ID=${API_ID}

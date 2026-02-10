@@ -1,13 +1,7 @@
-*.session
-*.ini
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
-*.so
 
 # Distribution / packaging
 .Python
@@ -51,9 +45,14 @@ __pypackages__/
 # Environments
 .env
 .venv
+.vscode
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
-liveprofile.log
+
+# Other
+*.session
+*.ini
+*.log

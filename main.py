@@ -19,11 +19,12 @@ logging.basicConfig(level=logging.INFO,
 try:
     api_id = int(os.getenv('API_ID', 0))
     api_hash = os.getenv('API_HASH', '')
-    session_string = os.getenv('SESSION_STRING', '')
+    session_string = StringSession(os.getenv('SESSION_STRING', ''))
 except Exception as e:
     logging.critical(f'Config data read error: {e}')
 
 
+# Изменение шрифта
 def butificate(name):
     name = name.replace('0', '𝟎')
     name = name.replace('1', '𝟏')
@@ -43,7 +44,7 @@ async def main():
     # Подключаемся к серверам Telegram
     try:
         client = TelegramClient(
-        StringSession(session_string),
+        session_string,
         api_id,
         api_hash
         )
@@ -51,6 +52,7 @@ async def main():
     except errors.rpcerrorlist.AuthKeyDuplicatedError as e:
         logging.critical(e)
     
+    # Основной скрипт
     i = 1
     name = None
     while True:
