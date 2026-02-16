@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   app:
@@ -10,8 +10,26 @@ services:
       - API_ID=${API_ID}
       - API_HASH=${API_HASH}
       - SESSION_STRING=${SESSION_STRING}
+  
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 45s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: 300M
+        reservations:
+          memory: 200M
+
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
+        compress: "true"

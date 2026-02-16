@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -40,7 +40,7 @@ jobs:
 
     - name: Create deployment directory
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} -p {{ secrets.SSH_PORT }} \
+        ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
           "sudo mkdir -p ${{ env.DEPLOYMENT_DIR }} && sudo chown ${{ secrets.SSH_USER }} ${{ env.DEPLOYMENT_DIR }}"
 
     - name: Copy compose file and environment
