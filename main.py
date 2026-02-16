@@ -9,8 +9,6 @@ from telethon.tl.functions.account import UpdateProfileRequest
 
 # Настройка логирования
 logging.basicConfig(level=logging.WARN,
-                    filename="liveprofile.log",
-                    filemode="w",
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%Y.%m.%d %H:%M:%S')
 

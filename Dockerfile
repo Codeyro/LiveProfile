@@ -1,24 +1,32 @@
-# Используем официальный минимальный Python образ
+# Cборка зависимостей
+FROM python:3.14-slim AS builder
+RUN pip install --no-cache-dir --upgrade pip
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    --target=/install \
+    -r requirements.txt
+
+# Сборка итогового образа
 FROM python:3.14-slim
+LABEL maintainer="Codeyro Production"
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
 
-# Обновляем PIP
-RUN pip install --upgrade pip
-
-# Устанавливаем рабочую директорию
+RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
-# Копируем зависимости
-COPY requirements.txt .
+# Копируем только установленные пакеты из стадии builder
+COPY --from=builder /install /usr/local/lib/python3.14/site-packages
+COPY --from=builder /install/bin/* /usr/local/bin/
 
-# Устанавливаем зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем только главный файл приложения
+COPY --chown=appuser:appuser main.py .
 
-# Копируем остальные файлы
-COPY . .
-
-# Создаем не-root пользователя для безопасности
-RUN useradd -m -u 1000 user && chown -R user:user /app
-USER user
+# Переключаемся на не-root пользователя
+USER appuser
 
 # Запускаем приложение
 CMD ["python", "main.py"]
