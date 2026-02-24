@@ -46,13 +46,13 @@ async def main():
             if not client.is_connected():
                 await client.connect()
 
-            if datetime.now().strftime('%H:%M') != name:
-                name = datetime.now().strftime('%H:%M')
-                
-            name_b = butificate(name)
+            now = butificate(datetime.now().strftime('%H:%M'))
 
-            await client(UpdateProfileRequest(first_name=name_b))
-            logging.debug(f'Name changed to "{name_b }"')
+            if now != name:
+                name = now
+                await client(UpdateProfileRequest(first_name=name))
+                logging.debug(f'Name changed to "{name}"')
+
         except errors.rpcerrorlist.FloodWaitError as e:
             logging.error(f'Flood Wait Error {e.seconds} seconds')
             await asyncio.sleep(e.seconds)
