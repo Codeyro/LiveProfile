@@ -2,14 +2,18 @@ version: '3.9'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - API_ID=${API_ID}
+        - API_HASH=${API_HASH}
+        - SESSION_STRING=${SESSION_STRING}
     container_name: liveprofile
     restart: unless-stopped
     environment:
       - TZ=Europe/Moscow
-      - API_ID=${API_ID}
-      - API_HASH=${API_HASH}
-      - SESSION_STRING=${SESSION_STRING}
+    env_file:
+      - .env
   
     healthcheck:
       test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
