@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/liveprofile-app
+  IMAGE_NAME: codeyro/liveprofile-app
   DEPLOY_DIR: /opt/liveprofile
 
 jobs:
