@@ -8,7 +8,7 @@ from telethon.tl.functions.account import UpdateProfileRequest
 
 
 # Настройка логирования
-logging.basicConfig(level=logging.WARN,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     datefmt='%Y.%m.%d %H:%M:%S')
 
@@ -21,47 +21,41 @@ SESSION_STRING = os.getenv('SESSION_STRING', '')
 
 # Изменение шрифта
 def butificate(name):
-    digits = "0123456789"
-    bold_digits = "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗"
-    table = str.maketrans(digits, bold_digits)
+    table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
     return name.translate(table)
 
 
+# Основной скрипт
 async def main():
-    # Подключаемся к серверам Telegram
+    client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH, connection_retries=None, retry_delay=10)
+
     try:
-        client = TelegramClient(
-        StringSession(SESSION_STRING),
-        API_ID,
-        API_HASH
-        )
         await client.start()
-    except errors.rpcerrorlist.AuthKeyDuplicatedError as e:
-        logging.critical(e)
+        logging.info('Successfully connected to Telegram.')
     
-    # Основной скрипт
-    name = None
-    while True:
-        try :
-            if not client.is_connected():
-                await client.connect()
+        while True:
+            try :
+                now = datetime.now()
+                name = butificate(now.strftime('%H:%M'))
 
-            now = butificate(datetime.now().strftime('%H:%M'))
-
-            if now != name:
-                name = now
                 await client(UpdateProfileRequest(first_name=name))
-                logging.debug(f'Name changed to "{name}"')
+                logging.info(f'Name changed to "{name}"')
 
-        except errors.rpcerrorlist.FloodWaitError as e:
-            logging.error(f'Flood Wait Error {e.seconds} seconds')
-            await asyncio.sleep(e.seconds)
-        except (ConnectionError, OSError) as e:
-            logging.error(f'Network error: {e}. Retry to connect after 10 seconds...')
-            await asyncio.sleep(10)
-        except Exception as e:
-            logging.exception(f'Unexcepted error: {e}')
-            await asyncio.sleep(10)
+                sleep_time = 60 - now.second - (now.microsecond / 1_000_000) + 0.1
+                await asyncio.sleep(max(sleep_time, 1))
+
+            except errors.rpcerrorlist.FloodWaitError as e:
+                logging.error(f'Flood Wait Error: Please, wait {e.seconds} seconds')
+                await asyncio.sleep(e.seconds)
+            except Exception as e:
+                logging.exception(f'Unexcepted error: {e}')
+                await asyncio.sleep(10)
+
+    except Exception as e:
+        logging.critical(f'Critical error: {e}')
+    finally:
+        await client.disconnect()
+        logging.info("LiveProfile successfully stopped.")
 
 
 if __name__ == '__main__':
