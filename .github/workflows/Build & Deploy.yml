@@ -40,45 +40,94 @@ jobs:
 
       - name: Prepare .env and Archive
         run: |
-          echo "API_ID='${{ secrets.API_ID }}'" > .env
+          echo "API_ID='${{ secrets.API_ID }}'"     > .env
           echo "API_HASH='${{ secrets.API_HASH }}'" >> .env
           echo "SESSION_STRING='${{ secrets.SESSION_STRING }}'" >> .env
-          echo "TZ=Europe/Moscow" >> .env
+          echo "TZ=Europe/Moscow"                   >> .env
           tar -czf configs.tar.gz .env docker-compose.yml
 
       - name: Copy configs to server
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: "configs.tar.gz"
-          target: ${{ env.DEPLOY_DIR }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          port:     ${{ secrets.SSH_PORT || '22' }}
+          source:   "configs.tar.gz"
+          target:   ${{ env.DEPLOY_DIR }}
 
-      - name: Run Docker commands via SSH
+      - name: Deploy via SSH (install docker if needed + deploy)
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GH_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
+          GH_USER:      ${{ github.actor }}
+          DEPLOY_DIR:   ${{ env.DEPLOY_DIR }}
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          port:     ${{ secrets.SSH_PORT || '22' }}
           script: |
             set -e
-            cd ${{ env.DEPLOY_DIR }}
-            
-            # Распаковка конфигов
+
+            # ────────────────────────────────────────────────
+            #          Установка Docker + docker compose
+            # ────────────────────────────────────────────────
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "Docker не найден → начинаем установку..."
+
+              sudo apt-get update -qq
+              sudo apt-get install -yq ca-certificates curl gnupg lsb-release
+
+              sudo install -m 0755 -d /etc/apt/keyrings
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+                | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+              echo \
+                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+              sudo apt-get update -qq
+              sudo apt-get install -yq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+              # Даём текущему пользователю права на docker без sudo
+              sudo usermod -aG docker ${USER}
+
+              echo "Docker установлен"
+            else
+              echo "Docker уже установлен"
+            fi
+
+            # Проверяем наличие плагина compose
+            if ! docker compose version >/dev/null 2>&1; then
+              echo "docker compose не найден → ставим docker-compose-plugin"
+              sudo apt-get install -yq docker-compose-plugin
+            fi
+
+            # ────────────────────────────────────────────────
+            #                   Основной деплой
+            # ────────────────────────────────────────────────
+            cd "${DEPLOY_DIR}"
+
+            # Распаковываем конфиги
             tar -xzf configs.tar.gz --overwrite
-            
-            # Авторизация в реестре на сервере
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            echo "🚀 Обновляем контейнеры..."
+
+            # Логинимся в GHCR
+            echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_USER}" --password-stdin
+
+            echo "🚀 Pulling fresh images..."
             docker compose pull
-            docker compose up -d --remove-orphans
-            
-            echo "🧹 Удаляем старые образы..."
-            docker image prune -f
-            
-            echo "✅ Статус:"
+
+            echo "🔄 Перезапускаем сервисы..."
+            docker compose up -d --remove-orphans --force-recreate
+
+            echo "🧹 Уборка старых образов..."
+            docker image prune -f --filter "until=24h" || true
+
+            echo "✅ Статус контейнеров:"
             docker compose ps
+
+            # Опционально: показываем последние логи при ошибке
+            echo "📜 Последние логи (если что-то упало):"
+            docker compose logs --tail=30 || true
