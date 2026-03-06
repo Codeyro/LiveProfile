@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: ~/liveprofile
+  DEPLOY_DIR: /opt/liveprofile
 
 jobs:
   build-and-push:
