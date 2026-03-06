@@ -1,14 +1,14 @@
-name: Build & Deploy
+name: Build & Deploy LiveProfile
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:    # для ручного запуска из интерфейса GitHub
   push:
     branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: /opt/liveprofile/
+  DEPLOY_DIR: /opt/liveprofile
 
 jobs:
   build-and-push:
@@ -41,28 +41,47 @@ jobs:
 
       - name: Prepare .env and Archive
         run: |
-          echo "API_ID='${{ secrets.API_ID }}'"     > .env
-          echo "API_HASH='${{ secrets.API_HASH }}'" >> .env
-          echo "SESSION_STRING='${{ secrets.SESSION_STRING }}'" >> .env
-          echo "TZ=Europe/Moscow"                   >> .env
+          cat > .env << 'EOF'
+          API_ID=${{ secrets.API_ID }}
+          API_HASH=${{ secrets.API_HASH }}
+          SESSION_STRING=${{ secrets.SESSION_STRING }}
+          TZ=Europe/Moscow
+          EOF
+
           tar -czf configs.tar.gz .env docker-compose.yml
 
-      - name: Copy configs to server
-        uses: appleboy/scp-action@v0.1.4
+      - name: Ensure deploy directory exists on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          port:     ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            mkdir -p ${{ env.DEPLOY_DIR }}
+            chmod 755 ${{ env.DEPLOY_DIR }}
+            # Если нужно изменить владельца:
+            # chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.DEPLOY_DIR }}
+
+      - name: Copy configs archive to server
+        uses: appleboy/scp-action@v1.0.0
         with:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
           port:     ${{ secrets.SSH_PORT || '22' }}
           source:   "configs.tar.gz"
-          target:   ${{ env.DEPLOY_DIR }}
+          target:   "${{ env.DEPLOY_DIR }}/"     # ← слеш обязателен!
+          debug:    true
+          overwrite: true
+          strip_components: 0
 
-      - name: Deploy via SSH (install docker if needed + deploy)
+      - name: Deploy via SSH (install docker if missing + deploy)
         uses: appleboy/ssh-action@v1.0.3
         env:
-          GH_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
-          GH_USER:      ${{ github.actor }}
-          DEPLOY_DIR:   ${{ env.DEPLOY_DIR }}
+          GH_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
+          GH_USER:    ${{ github.actor }}
+          DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
         with:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -71,64 +90,61 @@ jobs:
           script: |
             set -e
 
-            # ────────────────────────────────────────────────
-            #          Установка Docker + docker compose
-            # ────────────────────────────────────────────────
-            if ! command -v docker >/dev/null 2>&1; then
-              echo "Docker не найден → начинаем установку..."
-
+            # ──────────────── Установка Docker ────────────────
+            if ! command -v docker &> /dev/null; then
+              echo "→ Устанавливаем Docker..."
               sudo apt-get update -qq
               sudo apt-get install -yq ca-certificates curl gnupg lsb-release
-
               sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-                | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
               sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-              echo \
-                "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-                $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
 
               sudo apt-get update -qq
               sudo apt-get install -yq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-              # Даём текущему пользователю права на docker без sudo
               sudo usermod -aG docker ${USER}
-
               echo "Docker установлен"
             else
               echo "Docker уже установлен"
             fi
 
-            # Проверяем наличие плагина compose
-            if ! docker compose version >/dev/null 2>&1; then
-              echo "docker compose не найден → ставим docker-compose-plugin"
+            if ! docker compose version &> /dev/null; then
+              echo "→ Устанавливаем docker compose plugin..."
               sudo apt-get install -yq docker-compose-plugin
             fi
 
-            # ────────────────────────────────────────────────
-            #                   Основной деплой
-            # ────────────────────────────────────────────────
+            # ──────────────── Деплой ────────────────
             cd "${DEPLOY_DIR}"
 
-            # Распаковываем конфиги
+            echo "Содержимое директории:"
+            ls -la .
+
+            if [ ! -f configs.tar.gz ]; then
+              echo "ОШИБКА: configs.tar.gz не найден!"
+              exit 1
+            fi
+
+            chmod +r configs.tar.gz
+            echo "Распаковываем архив..."
             tar -xzf configs.tar.gz --overwrite
 
-            # Логинимся в GHCR
             echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_USER}" --password-stdin
 
-            echo "🚀 Pulling fresh images..."
-            docker compose pull
+            echo "→ Pulling images..."
+            docker compose pull app   # ← замени 'app' на реальное имя сервиса(-ов) из docker-compose.yml
+            # или: docker compose pull $(docker compose config --services | grep -i liveprofile)
 
-            echo "🔄 Перезапускаем сервисы..."
-            docker compose up -d --remove-orphans --force-recreate
+            echo "→ Перезапуск сервисов..."
+            docker compose up -d --force-recreate --remove-orphans app
 
-            echo "🧹 Уборка старых образов..."
-            docker image prune -f --filter "until=24h" || true
+            echo "→ Уборка старых образов..."
+            docker image prune -f --filter "until=48h" || true
 
-            echo "✅ Статус контейнеров:"
-            docker compose ps
+            echo "→ Статус:"
+            docker compose ps | grep -iE 'liveprofile|app|NAMES' || echo "Нет контейнеров с liveprofile/app"
 
-            # Опционально: показываем последние логи при ошибке
-            echo "📜 Последние логи (если что-то упало):"
-            docker compose logs --tail=30 || true
+            echo "→ Последние логи:"
+            docker compose logs --tail=40 app || true
+            
