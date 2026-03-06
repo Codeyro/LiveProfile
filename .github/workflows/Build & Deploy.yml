@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: ~
+  DEPLOY_DIR: ~   # домашняя директория пользователя — здесь точно есть права на запись
 
 jobs:
   build-and-push:
@@ -50,20 +50,7 @@ jobs:
 
           tar -czf configs.tar.gz .env docker-compose.yml
 
-      - name: Ensure deploy directory exists on server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host:     ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          port:     ${{ secrets.SSH_PORT || '22' }}
-          script: |
-            mkdir -p ${{ env.DEPLOY_DIR }}
-            chmod 755 ${{ env.DEPLOY_DIR }}
-            # Если нужно изменить владельца:
-            # chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} ${{ env.DEPLOY_DIR }}
-
-      - name: Copy configs archive to server
+      - name: Copy configs archive to server (в домашнюю директорию)
         uses: appleboy/scp-action@v1.0.0
         with:
           host:     ${{ secrets.SSH_HOST }}
@@ -71,7 +58,7 @@ jobs:
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
           port:     ${{ secrets.SSH_PORT || '22' }}
           source:   "configs.tar.gz"
-          target:   "${{ env.DEPLOY_DIR }}/"     # ← слеш обязателен!
+          target:   "~/"                        # копируем прямо в ~
           debug:    true
           overwrite: true
           strip_components: 0
@@ -118,11 +105,13 @@ jobs:
             # ──────────────── Деплой ────────────────
             cd "${DEPLOY_DIR}"
 
-            echo "Содержимое директории:"
+            echo "Текущая директория: $(pwd)"
+            echo "Содержимое:"
             ls -la .
 
             if [ ! -f configs.tar.gz ]; then
-              echo "ОШИБКА: configs.tar.gz не найден!"
+              echo "ОШИБКА: configs.tar.gz не найден в домашней директории!"
+              echo "Проверьте лог шага 'Copy configs archive to server' (debug включён)"
               exit 1
             fi
 
@@ -133,8 +122,9 @@ jobs:
             echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_USER}" --password-stdin
 
             echo "→ Pulling images..."
-            docker compose pull app   # ← замени 'app' на реальное имя сервиса(-ов) из docker-compose.yml
-            # или: docker compose pull $(docker compose config --services | grep -i liveprofile)
+            # ← Замени 'app' на реальное имя сервиса из твоего docker-compose.yml !!!
+            # Примеры: liveprofile, bot, main, api ...
+            docker compose pull app
 
             echo "→ Перезапуск сервисов..."
             docker compose up -d --force-recreate --remove-orphans app
@@ -143,7 +133,7 @@ jobs:
             docker image prune -f --filter "until=48h" || true
 
             echo "→ Статус:"
-            docker compose ps | grep -iE 'liveprofile|app|NAMES' || echo "Нет контейнеров с liveprofile/app"
+            docker compose ps
 
             echo "→ Последние логи:"
             docker compose logs --tail=40 app || true
