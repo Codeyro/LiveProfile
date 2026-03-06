@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: /opt/liveprofile
+  DEPLOY_DIR: /home/${{ secrets.SSH_USER }}/liveprofile
 
 jobs:
   build-and-push:
@@ -147,4 +147,3 @@ jobs:
 
             echo "→ Последние логи:"
             docker compose logs --tail=40 app || true
-            
