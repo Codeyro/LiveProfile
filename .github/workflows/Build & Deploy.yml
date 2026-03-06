@@ -1,14 +1,14 @@
 name: Build & Deploy LiveProfile
 
 on:
-  workflow_dispatch:    # для ручного запуска из интерфейса GitHub
+  workflow_dispatch:
   push:
     branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: /home/${{ secrets.SSH_USER }}/liveprofile
+  DEPLOY_DIR: ~/
 
 jobs:
   build-and-push:
