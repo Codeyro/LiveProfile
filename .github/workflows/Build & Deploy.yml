@@ -59,7 +59,7 @@ jobs:
           tar -czf configs.tar.gz .env docker-compose.yml
 
       - name: Copy configs to server
-        uses: appleboy/scp-action@v1.0.1
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
