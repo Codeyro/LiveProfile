@@ -41,7 +41,7 @@ async def main():
                 await client(UpdateProfileRequest(first_name=name))
                 logging.info(f'Name changed to "{name}"')
 
-                sleep_time = 60 - now.second - (now.microsecond / 1_000_000) + 0.1
+                sleep_time = 60 - now.second - (now.microsecond / 1000000) + 0.1
                 await asyncio.sleep(max(sleep_time, 1))
 
             except errors.rpcerrorlist.FloodWaitError as e:
