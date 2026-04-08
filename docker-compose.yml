@@ -12,14 +12,6 @@ services:
       - TZ=Europe/Moscow
     env_file:
       - .env
-  
-    healthcheck:
-      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
-      interval: 45s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-      start_interval: 5s
     
     deploy:
       resources:
