@@ -1,14 +1,14 @@
-name: Build & Deploy LiveProfile
+name: Build & Deploy
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: codeyro/liveprofile-app
-  DEPLOY_DIR: ~   # домашняя директория пользователя — здесь точно есть права на запись
+  IMAGE_NAME: codeyro/liveprofile
+  DEPLOY_DIR: ~/
 
 jobs:
   build-and-push:
@@ -41,99 +41,45 @@ jobs:
 
       - name: Prepare .env and Archive
         run: |
-          cat > .env << 'EOF'
-          API_ID=${{ secrets.API_ID }}
-          API_HASH=${{ secrets.API_HASH }}
-          SESSION_STRING=${{ secrets.SESSION_STRING }}
-          TZ=Europe/Moscow
-          EOF
-
+          echo "API_ID='${{ secrets.API_ID }}'" > .env
+          echo "API_HASH='${{ secrets.API_HASH }}'" >> .env
+          echo "SESSION_STRING='${{ secrets.SESSION_STRING }}'" >> .env
+          echo "TZ=Europe/Moscow" >> .env
           tar -czf configs.tar.gz .env docker-compose.yml
 
-      - name: Copy configs archive to server (в домашнюю директорию)
-        uses: appleboy/scp-action@v1.0.0
+      - name: Copy configs to server
+        uses: appleboy/scp-action@v0.1.4
         with:
-          host:     ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          port:     ${{ secrets.SSH_PORT || '22' }}
-          source:   "configs.tar.gz"
-          target:   "~/"                        # копируем прямо в ~
-          debug:    true
-          overwrite: true
-          strip_components: 0
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: "configs.tar.gz"
+          target: ${{ env.DEPLOY_DIR }}
 
-      - name: Deploy via SSH (install docker if missing + deploy)
+      - name: Run Docker commands via SSH
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          GH_TOKEN:   ${{ secrets.GITHUB_TOKEN }}
-          GH_USER:    ${{ github.actor }}
-          DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
         with:
-          host:     ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          port:     ${{ secrets.SSH_PORT || '22' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
           script: |
             set -e
-
-            # ──────────────── Установка Docker ────────────────
-            if ! command -v docker &> /dev/null; then
-              echo "→ Устанавливаем Docker..."
-              sudo apt-get update -qq
-              sudo apt-get install -yq ca-certificates curl gnupg lsb-release
-              sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-
-              sudo apt-get update -qq
-              sudo apt-get install -yq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-              sudo usermod -aG docker ${USER}
-              echo "Docker установлен"
-            else
-              echo "Docker уже установлен"
-            fi
-
-            if ! docker compose version &> /dev/null; then
-              echo "→ Устанавливаем docker compose plugin..."
-              sudo apt-get install -yq docker-compose-plugin
-            fi
-
-            # ──────────────── Деплой ────────────────
-            cd "${DEPLOY_DIR}"
-
-            echo "Текущая директория: $(pwd)"
-            echo "Содержимое:"
-            ls -la .
-
-            if [ ! -f configs.tar.gz ]; then
-              echo "ОШИБКА: configs.tar.gz не найден в домашней директории!"
-              echo "Проверьте лог шага 'Copy configs archive to server' (debug включён)"
-              exit 1
-            fi
-
-            chmod +r configs.tar.gz
-            echo "Распаковываем архив..."
+            cd ${{ env.DEPLOY_DIR }}
+            
+            # Распаковка конфигов
             tar -xzf configs.tar.gz --overwrite
-
-            echo "${GH_TOKEN}" | docker login ghcr.io -u "${GH_USER}" --password-stdin
-
-            echo "→ Pulling images..."
-            # ← Замени 'app' на реальное имя сервиса из твоего docker-compose.yml !!!
-            # Примеры: liveprofile, bot, main, api ...
-            docker compose pull app
-
-            echo "→ Перезапуск сервисов..."
-            docker compose up -d --force-recreate --remove-orphans app
-
-            echo "→ Уборка старых образов..."
-            docker image prune -f --filter "until=48h" || true
-
-            echo "→ Статус:"
+            
+            # Авторизация в реестре на сервере
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "Обновляем контейнеры..."
+            docker compose pull
+            docker compose up -d --remove-orphans
+            
+            echo "Удаляем старые образы..."
+            docker image prune -f
+            
+            echo "Статус:"
             docker compose ps
-
-            echo "→ Последние логи:"
-            docker compose logs --tail=40 app || true

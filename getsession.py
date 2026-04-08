@@ -28,5 +28,4 @@ async def main():
         print("Session string:", client.session.save())
 
 if __name__ == '__main__':
-    import asyncio
     asyncio.run(main())
