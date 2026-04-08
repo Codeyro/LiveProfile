@@ -8,8 +8,6 @@ services:
         - SESSION_STRING=${SESSION_STRING}
     container_name: liveprofile
     restart: unless-stopped
-    environment:
-      - TZ=Europe/Moscow
     env_file:
       - .env
     
