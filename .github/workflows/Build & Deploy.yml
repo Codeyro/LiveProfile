@@ -89,7 +89,7 @@ jobs:
           scp -r -i ~/.ssh/deploy_key \
             -P ${{ secrets.SSH_PORT || 22 }} \
             docker-compose.yml \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}
 
       - name: Deploy to VPS
         run: |
