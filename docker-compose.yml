@@ -1,6 +1,6 @@
 services:
-  app:
-    image: ${DOCKER_IMAGE:-codeyro/liveprofile:latest}
+  liveprofile:
+    image: ghcr.io/codeyro/liveprofile:latest
     container_name: liveprofile
     restart: unless-stopped
 
