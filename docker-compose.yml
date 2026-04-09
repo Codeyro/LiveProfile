@@ -1,23 +1,28 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        - API_ID=${API_ID}
-        - API_HASH=${API_HASH}
-        - SESSION_STRING=${SESSION_STRING}
+    image: ${DOCKER_IMAGE:-codeyro/liveprofile:latest}
     container_name: liveprofile
     restart: unless-stopped
+
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - SESSION_STRING=${SESSION_STRING}
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+
     env_file:
       - .env
-    
+
     deploy:
       resources:
         limits:
           cpus: "0.8"
-          memory: 300M
+          memory: 150M
         reservations:
-          memory: 200M
+          cpus: "0.5"
+          memory: 50M
 
     logging:
       driver: "json-file"
@@ -25,3 +30,7 @@ services:
         max-size: "10m"
         max-file: "3"
         compress: "true"
+
+    labels:
+      - "app=liveprofile"
+      - "version=1.0"
