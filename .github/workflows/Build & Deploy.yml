@@ -84,21 +84,27 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT || 22 }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy docker-compose.yml to VPS
-        run: |
-          scp -r -i ~/.ssh/deploy_key \
-            -P ${{ secrets.SSH_PORT || 22 }} \
-            docker-compose.yml \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/
-
       - name: Deploy to VPS
         run: |
           ssh -i ~/.ssh/deploy_key \
             -p ${{ secrets.SSH_PORT || 22 }} \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSHEOF'
 
           # Create app directory
           mkdir -p ${{ env.DEPLOY_PATH }}
+          SSHEOF
+
+          # Copy docker-compose.yml from repo
+          scp -i ~/.ssh/deploy_key \
+            -P ${{ secrets.SSH_PORT || 22 }} \
+            docker-compose.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/
+
+          # Continue deployment
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.SSH_PORT || 22 }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSHEOF'
+
           cd ${{ env.DEPLOY_PATH }}
 
           # Create .env file
@@ -128,7 +134,7 @@ jobs:
           docker ps -a | grep ${{ env.CONTAINER_NAME }}
           echo "=== Last 10 logs ==="
           docker logs -n 10 ${{ env.CONTAINER_NAME }}
-          EOF
+          SSHEOF
 
       - name: Cleanup SSH key
         if: always()
