@@ -17,9 +17,9 @@
 - Кастомизированные символы Unicode для стилизации времени
 - Минимальная нагрузка на систему
 
-## Деплой на VPS
+## Деплой в Docker на VPS
 
-1. Добавьте GitHub Secrets: Settings → Secrets and variables → Actions. Обязательно добавьте:
+- Добавьте GitHub Secrets: Settings → Secrets and variables → Actions. Обязательно добавьте:
 
 ```secrets
 VPS_HOST = адрес сервера
@@ -32,7 +32,7 @@ SESSION_STRING = ваша telethon session
 VPS_SSH_PORT = номер порта SSH, если не 22
 ```
 
-2. Cделайте push в main:
+- Cделайте push в main:
 
 ```bash
 git push origin main
