@@ -32,5 +32,6 @@ services:
         compress: "true"
 
     labels:
-      - "app=liveprofile"
-      - "version=1.0"
+      app: "liveprofile"
+      version: "2.0.0"
+      owner: "Codeyro Production"

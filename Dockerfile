@@ -1,4 +1,4 @@
-# Cборка зависимостей
+# Build stage
 FROM python:3.14-slim AS builder
 RUN pip install --no-cache-dir --upgrade pip
 WORKDIR /app
@@ -7,13 +7,9 @@ RUN pip install --no-cache-dir \
     --target=/install \
     -r requirements.txt
 
-# Сборка итогового образа
+# Production stage
 FROM python:3.14-slim
 LABEL maintainer="Codeyro Production"
-
-ARG API_ID
-ARG API_HASH
-ARG SESSION_STRING
 
 ENV API_ID=$API_ID \
     API_HASH=$API_HASH \
