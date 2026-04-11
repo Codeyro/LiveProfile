@@ -4,12 +4,6 @@ services:
     container_name: liveprofile
     restart: unless-stopped
 
-    environment:
-      - TZ=${TZ:-Europe/Moscow}
-      - API_ID=${API_ID}
-      - API_HASH=${API_HASH}
-      - SESSION_STRING=${SESSION_STRING}
-
     env_file:
       - .env
 
