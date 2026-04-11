@@ -11,14 +11,19 @@ RUN pip install --no-cache-dir \
 FROM python:3.14-slim
 LABEL maintainer="Codeyro Production"
 
-ENV API_ID=$API_ID \
+ARG TZ
+ARG API_ID
+ARG API_HASH
+ARG SESSION_STRING
+
+ENV TZ=$TZ \
+    API_ID=$API_ID \
     API_HASH=$API_HASH \
     SESSION_STRING=$SESSION_STRING\
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on\
-    TZ=Europe/Moscow
+    PIP_DISABLE_PIP_VERSION_CHECK=on
 
 RUN useradd -m -u 1000 appuser
 WORKDIR /app

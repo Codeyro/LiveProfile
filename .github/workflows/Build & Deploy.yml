@@ -1,4 +1,4 @@
-name: Build & Deploy to VPS
+name: Build & Deploy
 
 on:
   push:
@@ -12,10 +12,9 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: liveprofile
-  DEPLOY_PATH: /home/${{ secrets.SSH_USER }}/liveprofile
-  DOCKER_IMAGE: ghcr.io/codeyro/liveprofile:latest
+  IMAGE_NAME: ghcr.io/codeyro/liveprofile:latest
   CONTAINER_NAME: liveprofile
+  DEPLOY_PATH: /home/${{ secrets.SSH_USER }}/liveprofile
 
 concurrency:
   group: deployment
@@ -47,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha,prefix={{branch}}-
@@ -63,6 +62,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+            TZ=${{ secrets.TZ || 'Europe/Moscow' }}
             API_ID=${{ secrets.API_ID }}
             API_HASH=${{ secrets.API_HASH }}
             SESSION_STRING=${{ secrets.SESSION_STRING }}
@@ -109,10 +109,10 @@ jobs:
 
           # Create .env file
           cat > .env << 'ENVEOF'
+          TZ=${{ secrets.TZ || 'Europe/Moscow' }}
           API_ID=${{ secrets.API_ID }}
           API_HASH=${{ secrets.API_HASH }}
           SESSION_STRING=${{ secrets.SESSION_STRING }}
-          TZ=Europe/Moscow
           ENVEOF
 
           # Docker login
@@ -122,15 +122,15 @@ jobs:
           docker-compose down 2>/dev/null || true
 
           # Pull latest image
-          docker pull ${{ env.DOCKER_IMAGE }}
+          docker pull ${{ env.IMAGE_NAME }}
 
           # Start new container
           docker compose up -d
 
           # Show status
-          echo "=== Container Status ==="
+          echo "Container Status:"
           docker ps -a | grep ${{ env.CONTAINER_NAME }}
-          echo "=== Last 10 logs ==="
+          echo "Last 10 logs:"
           docker logs -n 10 ${{ env.CONTAINER_NAME }}
           SSHEOF
 
