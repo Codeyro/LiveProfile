@@ -10,10 +10,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.8"
+          cpus: "0.5"
           memory: 150M
         reservations:
-          cpus: "0.5"
+          cpus: "0.4"
           memory: 50M
 
     logging:
