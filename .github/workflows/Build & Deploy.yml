@@ -12,7 +12,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/codeyro/liveprofile:latest
+  IMAGE_NAME: ghcr.io/codeyro/liveprofile
   CONTAINER_NAME: liveprofile
   DEPLOY_PATH: /home/${{ secrets.SSH_USER }}/liveprofile
 
