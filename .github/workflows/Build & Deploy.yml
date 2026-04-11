@@ -119,7 +119,7 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
           # Stop old container if exists
-          docker-compose down 2>/dev/null || true
+          docker-compose down --rmi all 2>/dev/null || true
 
           # Pull latest image
           docker pull ${{ env.IMAGE_NAME }}
