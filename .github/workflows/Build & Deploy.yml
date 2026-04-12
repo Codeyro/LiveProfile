@@ -111,7 +111,7 @@ jobs:
 
           # Stop old container if exists
           docker-compose down 2>/dev/null || true
-          docker image prune
+          docker image prune -y
 
           # Pull latest image
           docker compose pull
