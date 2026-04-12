@@ -111,13 +111,15 @@ jobs:
 
           # Stop old container if exists
           docker-compose down 2>/dev/null || true
-          docker image prune -f
 
           # Pull latest image
           docker compose pull
 
           # Start new container
           docker compose up -d
+
+          # Cleanup untagged docker images
+          docker image prune -f
 
           # Show status
           echo "Container Status:"
