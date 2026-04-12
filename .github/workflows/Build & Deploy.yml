@@ -6,10 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/codeyro/liveprofile
@@ -61,11 +57,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            TZ=${{ secrets.TZ || 'Europe/Moscow' }}
-            API_ID=${{ secrets.API_ID }}
-            API_HASH=${{ secrets.API_HASH }}
-            SESSION_STRING=${{ secrets.SESSION_STRING }}
 
   deploy:
     name: Deploy to VPS
@@ -109,7 +100,7 @@ jobs:
 
           # Create .env file
           cat > .env << 'ENVEOF'
-          TZ=${{ secrets.TZ || 'Europe/Moscow' }}
+          TZ=${{ secrets.TZ || 'UTC' }}
           API_ID=${{ secrets.API_ID }}
           API_HASH=${{ secrets.API_HASH }}
           SESSION_STRING=${{ secrets.SESSION_STRING }}
@@ -122,7 +113,7 @@ jobs:
           docker-compose down --rmi all 2>/dev/null || true
 
           # Pull latest image
-          docker pull ${{ env.IMAGE_NAME }}
+          docker pull
 
           # Start new container
           docker compose up -d
