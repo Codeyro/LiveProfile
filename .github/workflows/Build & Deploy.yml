@@ -113,7 +113,7 @@ jobs:
           docker-compose down --rmi all 2>/dev/null || true
 
           # Pull latest image
-          docker pull
+          docker compose pull
 
           # Start new container
           docker compose up -d
