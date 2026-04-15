@@ -4,11 +4,6 @@ services:
     container_name: liveprofile
     restart: unless-stopped
     network_mode: host
-    
-    labels:
-      app: "liveprofile"
-      version: "2.0.0"
-      owner: "Codeyro Production"
       
     env_file:
       - .env
