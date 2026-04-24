@@ -9,9 +9,8 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: codeyro
-  CONTAINER_NAME: liveprofile
-  DEPLOY_PATH: /home/${{ secrets.SSH_USER }}/liveprofile
-
+  NAME: liveprofile
+  
 concurrency:
   group: deployment
   cancel-in-progress: false
@@ -42,7 +41,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.CONTAINER_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.NAME }}
           tags: |
             type=raw,value=latest
             type=sha,prefix={{branch}}-
@@ -82,21 +81,21 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSHEOF'
 
           # Create app directory
-          mkdir -p ${{ env.DEPLOY_PATH }}
+          mkdir -p /home/${{ secrets.SSH_USER }}/${{ env.NAME }}
           SSHEOF
 
           # Copy docker-compose.yml from repo
           scp -i ~/.ssh/deploy_key \
             -P ${{ secrets.SSH_PORT || 22 }} \
             docker-compose.yml \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/${{ env.NAME }}/
 
           # Continue deployment
           ssh -i ~/.ssh/deploy_key \
             -p ${{ secrets.SSH_PORT || 22 }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'SSHEOF'
 
-          cd ${{ env.DEPLOY_PATH }}
+          cd /home/${{ secrets.SSH_USER }}/${{ env.NAME }}
 
           # Create .env file
           cat > .env << 'ENVEOF'
@@ -107,10 +106,10 @@ jobs:
           ENVEOF
 
           # Docker login
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-          # Stop old container if exists
-          docker-compose down 2>/dev/null || true
+          # Stop compose services if exists
+          docker compose down 2>/dev/null || true
 
           # Pull latest image
           docker compose pull
@@ -120,12 +119,15 @@ jobs:
 
           # Cleanup untagged docker images
           docker image prune -f
+          docker system prune -f --volumes 2>/dev/null || true
 
           # Show status
+          echo ""
           echo "Container Status:"
-          docker ps -a | grep ${{ env.CONTAINER_NAME }}
+          docker ps -a | grep ${{ env.NAME }}
+          echo ""
           echo "Last 10 logs:"
-          docker logs -n 10 ${{ env.CONTAINER_NAME }}
+          docker logs -n 10 ${{ env.NAME }}
           SSHEOF
 
       - name: Cleanup SSH key
