@@ -9,27 +9,24 @@
 ## Особенности
 
 - Автоматическое обновление имени профиля каждую минуту
-- Стилизованные цифры времени (используются жирные символы)
-- Обработка ошибок (FloodWait, проблемы с соединением)
+- Кастомизированные жирные символы Unicode для стилизации времени
+- Обработка ошибок и автоматическое восстановление соединения с Telegram
 - Логирование важных событий
 - Работа в фоновом режиме
-- Использование Telethon для взаимодействия с Telegram API
-- Кастомизированные символы Unicode для стилизации времени
-- Минимальная нагрузка на систему
+- Минимальная нагрузка на систему благодаря asyncio.sleep
 
 ## Деплой в Docker на VPS
 
-- Добавьте GitHub Secrets: Settings → Secrets and variables → Actions. Обязательно добавьте:
+- Добавьте GitHub Secrets (Settings → Secrets and variables → Actions):
 
 ```secrets
 VPS_HOST = адрес сервера
 VPS_USER = SSH пользователь
-VPS_SSH_KEY = файл приватного ключа
-VPS_APP_PATH = путь деплоя на VPS
+VPS_SSH_PORT = номер порта SSH, если не 22
+VPS_SSH_KEY = файл приватного SSH ключа
 API_ID = ваш telegram API ID
 API_HASH = ваш telegram API hash
-SESSION_STRING = ваша telethon session
-VPS_SSH_PORT = номер порта SSH, если не 22
+SESSION_STRING = ваша строка telethon сессии
 ```
 
 - Cделайте push в main:
