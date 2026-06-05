@@ -17,5 +17,4 @@ docker-compose.yml
 .gitignore
 README.md
 getsession.py
-requirements.txt
 Dockerfile
