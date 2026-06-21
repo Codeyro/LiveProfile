@@ -16,6 +16,7 @@ def datetime_string(dt: datetime) -> str:
         raise ValueError("Аргумент должен быть объектом datetime")
 
     hour = dt.hour
+    hour_12 = hour_to_12_hour_format(hour)
     day = dt.day
     month = dt.month
     year = dt.year
@@ -54,11 +55,11 @@ def datetime_string(dt: datetime) -> str:
         9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
     }
 
-    hours_word = get_hour_form(hour)
+    hours_word = get_hour_form(hour_12)
     period = get_time_period(hour)
     month_str = months_genitive[month]
 
-    return (f"Сейчас\n{hour_to_12_hour_format(hour)} {hours_word}\n{period},\n{day} {month_str}\n{year} года").upper()
+    return (f"Сейчас\n{hour_12} {hours_word}\n{period},\n{day} {month_str}\n{year} года").upper()
 
 
 # Аватарка из текста
