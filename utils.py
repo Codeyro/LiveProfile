@@ -12,15 +12,9 @@ def butificate(name):
 # Конвертация даты и времени в строку
 def datetime_string(dt: datetime) -> str:
 
-    if not isinstance(dt, datetime):
-        raise ValueError("Аргумент должен быть объектом datetime")
-
-    hour = dt.hour
-    hour_12 = hour_to_12_hour_format(hour)
-    day = dt.day
-    month = dt.month
-    year = dt.year
-
+    def hour_to_12_hour_format(h: int) -> int:
+        return h % 12 if h % 12 != 0 else 12
+    
     # Склонение слова "час"
     def get_hour_form(h: int) -> str:
         if h == 0:
@@ -44,9 +38,15 @@ def datetime_string(dt: datetime) -> str:
             return "дня"
         else:  # 18-22
             return "вечера"
-        
-    def hour_to_12_hour_format(h: int) -> int:
-        return h % 12 if h % 12 != 0 else 12
+
+    if not isinstance(dt, datetime):
+        raise ValueError("Аргумент должен быть объектом datetime")
+
+    hour = dt.hour
+    hour_12 = hour_to_12_hour_format(hour)
+    day = dt.day
+    month = dt.month
+    year = dt.year
 
     # Месяцы в родительном падеже
     months_genitive = {
