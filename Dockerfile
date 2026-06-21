@@ -23,6 +23,8 @@ WORKDIR /app
 COPY --from=builder /install /usr/local/lib/python3.14/site-packages
 COPY --from=builder /install/bin/* /usr/local/bin/
 COPY --chown=appuser:appuser main.py .
+COPY --chown=appuser:appuser utils.py .
+COPY --chown=appuser:appuser /fonts/ .
 
 USER appuser
 
