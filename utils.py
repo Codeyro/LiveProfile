@@ -92,4 +92,3 @@ def string_avatar(
     draw.text((x, y - 5), text, font=font, fill="black")
 
     img.save(output_file)
-    print(f"Saved -> {output_file}")
