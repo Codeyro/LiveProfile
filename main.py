@@ -1,3 +1,4 @@
+import utils
 import os
 import asyncio
 import logging
@@ -5,6 +6,7 @@ from datetime import datetime
 from telethon import TelegramClient, errors
 from telethon.sessions import StringSession
 from telethon.tl.functions.account import UpdateProfileRequest
+from telethon.tl.functions.photos import UploadProfilePhotoRequest
 
 
 # Настройка логирования
@@ -19,28 +21,28 @@ API_HASH = os.getenv('API_HASH', '')
 SESSION_STRING = os.getenv('SESSION_STRING', '')
 
 
-# Изменение шрифта
-def butificate(name):
-    table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
-    return name.translate(table)
-
-
 # Основной скрипт
 async def main():
+    current_hour = None
     client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH, connection_retries=None, retry_delay=10)
 
     try:
         await client.start()
         logging.info('Successfully connected to Telegram.')
-    
+
         while True:
             try :
                 now = datetime.now()
-                name = butificate(now.strftime('%H:%M'))
+                name = utils.butificate(now.strftime('%H:%M'))
 
                 await client(UpdateProfileRequest(first_name=name))
                 logging.info(f'Name changed to "{name}"')
-
+                if now.hour != current_hour:
+                    utils.string_avatar(utils.datetime_string(now))
+                    file = await client.upload_file('avatar.png')
+                    await client(UploadProfilePhotoRequest(file=file))
+                    current_hour = now.hour
+                    logging.info(f'Photo updated for hour {current_hour}')
                 sleep_time = 60 - now.second - (now.microsecond / 1000000) + 0.1
                 await asyncio.sleep(max(sleep_time, 1))
 
