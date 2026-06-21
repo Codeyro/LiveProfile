@@ -43,6 +43,9 @@ def datetime_string(dt: datetime) -> str:
             return "дня"
         else:  # 18-22
             return "вечера"
+        
+    def hour_to_12_hour_format(h: int) -> int:
+        return h % 12 if h % 12 != 0 else 12
 
     # Месяцы в родительном падеже
     months_genitive = {
@@ -55,7 +58,7 @@ def datetime_string(dt: datetime) -> str:
     period = get_time_period(hour)
     month_str = months_genitive[month]
 
-    return (f"Сейчас\n{hour} {hours_word}\n{period},\n{day} {month_str}\n{year} года").upper()
+    return (f"Сейчас\n{hour_to_12_hour_format(hour)} {hours_word}\n{period},\n{day} {month_str}\n{year} года").upper()
 
 
 # Аватарка из текста
