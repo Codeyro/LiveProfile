@@ -19,6 +19,8 @@ ENV PYTHONUNBUFFERED=1 \
 RUN useradd -m -u 1000 appuser
 WORKDIR /app
 
+RUN chown appuser:appuser /app
+
 # Copy app packages and dependencies from builder stage
 COPY --from=builder /install /usr/local/lib/python3.14/site-packages
 COPY --from=builder /install/bin/* /usr/local/bin/
