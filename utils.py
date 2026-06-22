@@ -30,14 +30,10 @@ def datetime_string(dt: datetime) -> str:
 
     # Часть суток
     def get_time_period(h: int) -> str:
-        if 0 <= h <= 4 or h == 23:
-            return "ночи"
-        elif 5 <= h <= 11:
-            return "утра"
-        elif 12 <= h <= 17:
-            return "дня"
-        else:  # 18-22
-            return "вечера"
+        if 0 <= h <= 12:
+            return "A.M."
+        else:
+            return "P.M."
 
     if not isinstance(dt, datetime):
         raise ValueError("Аргумент должен быть объектом datetime")
@@ -51,7 +47,7 @@ def datetime_string(dt: datetime) -> str:
     # Месяцы в родительном падеже
     months_genitive = {
         1: "января", 2: "февраля", 3: "марта", 4: "апреля",
-        5: "мая", 6: "июня", 7: "июля", 8: "августа",
+        5: "мая", 6: "June", 7: "July", 8: "августа",
         9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
     }
 
@@ -59,7 +55,7 @@ def datetime_string(dt: datetime) -> str:
     period = get_time_period(hour)
     month_str = months_genitive[month]
 
-    return (f"Сейчас\n{hour_12} {hours_word}\n{period},\n{day} {month_str}\n{year} года").upper()
+    return (f"It's now\n{hour_12} {period}\non {month_str} {day}\n{year} LOL...").upper()
 
 
 # Аватарка из текста
@@ -93,6 +89,9 @@ def string_avatar(
     x = (size - w) // 2
     y = (size - h) // 2
 
-    draw.text((x, y - 5), text, font=font, fill="black")
+    draw.text((x, y - 12), text, font=font, fill="black")
 
     img.save(output_file)
+
+
+string_avatar(datetime_string(datetime.now()))
