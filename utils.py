@@ -46,10 +46,20 @@ def datetime_string(dt: datetime) -> str:
 
     # Месяцы в родительном падеже
     months_genitive = {
-        1: "января", 2: "февраля", 3: "марта", 4: "апреля",
-        5: "мая", 6: "June", 7: "July", 8: "августа",
-        9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
     }
+
 
     hours_word = get_hour_form(hour_12)
     period = get_time_period(hour)
