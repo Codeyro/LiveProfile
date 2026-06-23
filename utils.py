@@ -30,7 +30,7 @@ def datetime_string(dt: datetime) -> str:
 
     # Часть суток
     def get_time_period(h: int) -> str:
-        if 0 <= h <= 12:
+        if 0 <= h <= 11:
             return "A.M."
         else:
             return "P.M."
