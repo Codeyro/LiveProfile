@@ -23,7 +23,7 @@ SESSION_STRING = os.getenv('SESSION_STRING', '')
 
 # Основной скрипт
 async def main():
-    current_hour = None
+    current_hour = datetime.now().hour
     client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH, connection_retries=None, retry_delay=10)
 
     try:
