@@ -102,6 +102,3 @@ def string_avatar(
     draw.text((x, y - 12), text, font=font, fill="black")
 
     img.save(output_file)
-
-
-string_avatar(datetime_string(datetime.now()))
