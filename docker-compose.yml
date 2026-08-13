@@ -1,6 +1,6 @@
 services:
   liveprofile:
-    image: ghcr.io/codeyro/liveprofile:latest
+    build: .
     container_name: liveprofile
     restart: unless-stopped
     network_mode: host   
