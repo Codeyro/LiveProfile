@@ -3,12 +3,6 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 
-# Изменение шрифта
-def butificate(name):
-    table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
-    return name.translate(table)
-
-
 # Конвертация даты и времени в строку
 def datetime_string(dt: datetime) -> str:
 

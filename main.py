@@ -9,22 +9,26 @@ from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
 
 
-# Настройка логирования
-logging.basicConfig(level=logging.WARNING,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%Y.%m.%d %H:%M:%S')
-
-
-# Конфигурация
+# Configuration variables
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
 SESSION_STRING = os.getenv('SESSION_STRING', '')
 
 
-# Основной скрипт
+# Logging configuration
+logging.basicConfig(level=logging.WARNING,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    datefmt='%Y.%m.%d %H:%M:%S')
+
+
+# Main function
 async def main():
     current_hour = datetime.now().hour
-    client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH, connection_retries=None, retry_delay=10)
+    table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
+    client = TelegramClient(StringSession(SESSION_STRING),
+                            API_ID, API_HASH,
+                            connection_retries=None,
+                            retry_delay=10)
 
     try:
         await client.start()
@@ -33,7 +37,7 @@ async def main():
         while True:
             try :
                 now = datetime.now()
-                name = utils.butificate(now.strftime('%H:%M'))
+                name = now.strftime('%H:%M').translate(table)
 
                 await client(UpdateProfileRequest(first_name=name))
                 logging.info(f'Name changed to "{name}"')
@@ -57,7 +61,7 @@ async def main():
         logging.critical(f'Critical error: {e}')
     finally:
         await client.disconnect()
-        logging.info("LiveProfile successfully stopped.")
+        logging.info("LiveProfile successfully stopped")
 
 
 if __name__ == '__main__':

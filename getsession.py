@@ -5,16 +5,16 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s',
-                    datefmt='%Y.%m.%d %H:%M:%S')
-
-
-# Конфигурация
+# Configuration variables
 API_ID = int(os.getenv('API_ID', 0))
 API_HASH = os.getenv('API_HASH', '')
 SESSION_STRING = os.getenv('SESSION_STRING', '')
+
+
+# Logging configuration
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s',
+                    datefmt='%Y.%m.%d %H:%M:%S')
 
 
 async def main():
