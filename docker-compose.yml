@@ -3,23 +3,20 @@ services:
     image: ghcr.io/codeyro/liveprofile:latest
     container_name: liveprofile
     restart: unless-stopped
-    network_mode: host
-      
+    network_mode: host   
     env_file:
       - .env
-
     deploy:
       resources:
         limits:
           cpus: "0.5"
-          memory: 150M
+          memory: 50M
         reservations:
           cpus: "0.4"
           memory: 50M
-
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "1"
         compress: "true"
