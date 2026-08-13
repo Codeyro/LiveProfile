@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.WARNING,
 
 # Main function
 async def main():
+    table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
     client = TelegramClient(
         StringSession(SESSION_STRING),
         API_ID,
@@ -32,7 +33,6 @@ async def main():
     try:
         await client.start()
         logging.info('Successfully connected to Telegram.')
-        table = str.maketrans('0123456789', '𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗')
 
         while True:
             try :
