@@ -25,7 +25,7 @@ async def main():
         StringSession(SESSION_STRING),
         API_ID,
         API_HASH,
-        connection_retries=None
+        connection_retries=None,
         retry_delay=10
         )
 
