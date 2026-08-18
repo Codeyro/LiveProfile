@@ -14,6 +14,8 @@ COPY --chown=appuser:appuser main.py .
 COPY --chown=appuser:appuser utils.py .
 COPY --chown=appuser:appuser fonts/ ./fonts/
 
+RUN chown -R appuser:appuser /app
+
 USER appuser
 
 CMD ["python", "main.py"]
